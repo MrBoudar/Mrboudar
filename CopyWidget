@@ -1,0 +1,128 @@
+package com.zoneyet.sys.view;
+
+import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
+import android.text.ClipboardManager;
+import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewTreeObserver;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.zoneyet.gaga.R;
+import com.zoneyet.sys.util.Util;
+
+/**
+ * 复制模块化
+ * Created by MrBoudin on 2016/2/15.
+ */
+public class CopyWidget extends RelativeLayout {
+    PopupWindow popupWindow;
+    View CopyView;
+    GestureDetector gestureDetector;
+    private int copyWidth=0,copyHeight=0;//处理第一次oncreate()时width,height=0 原始高度
+    private TextView tv_popup_show;//复制
+    private View copyTv;//需要复制的textview
+
+    private  Context mContext;
+    OnTouchListener listener=new OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            return  gestureDetector.onTouchEvent(event);
+        }
+    };
+
+    public CopyWidget(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initContext(context);
+    }
+
+    public CopyWidget(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initContext(context);
+    }
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        initViewListener(mContext);
+    }
+
+    public void initContext(Context context){
+        this.mContext=context;
+    }
+    void initViewListener(Context context){
+        copyTv= getChildAt(1);
+        if(copyTv instanceof  TextView){
+        }else{
+            copyTv=getChildAt(2);
+        }
+        copyWidth = Util.dip2px(context, 70);
+        copyHeight = Util.dip2px(context, 30);
+        CopyView= LayoutInflater.from(context).inflate(R.layout.copy_popup_window_menu, null);
+        tv_popup_show= (TextView) CopyView.findViewById(R.id.tv_popup_show);
+        tv_popup_show.setText(context.getResources().getString(R.string.copy));
+        gestureDetector = new GestureDetector(context,new MyGesturer(context,copyTv,context.getString(R.string.copy)));
+        this.setOnTouchListener(listener);
+    }
+    public void showPopupMenu(final Context context,final String text, View v,int ... params)
+    {
+        popupWindow = new PopupWindow(CopyView, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        // 泡泡窗口默认是没有获得焦点的, 设置其获得焦点
+        popupWindow.setFocusable(true);
+        popupWindow.setAnimationStyle(R.style.copy_widget_pop_style);
+        // 为泡泡窗口设置空位图对象, 可以做到点击空白地方泡泡窗口关闭
+        popupWindow.setBackgroundDrawable(new BitmapDrawable());
+        popupWindow.showAtLocation(this, Gravity.NO_GRAVITY, params[0], params[1]);
+        LinearLayout popClick = (LinearLayout) CopyView.findViewById(R.id.popup_window_menu);
+        popClick.setOnClickListener(new LinearLayout.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                ClipboardManager cmb = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                cmb.setText(text);
+                popupWindow.dismiss();
+            }
+        });
+    }
+    /***
+     * 动态获取rawx,rawy距离屏幕距离
+     * @author sdj
+     * @version $Id: CopyPopWindowUtil.java, v 0.1 2015年4月10日 下午3:18:32 sdj Exp $
+     */
+    private class MyGesturer extends GestureDetector.SimpleOnGestureListener {
+        private Context context;
+        private View v;
+        private String s;
+        MyGesturer(Context c,View v,String s){
+            this.context = c;
+            this.v = v;
+            this.s = s;
+        }
+        @Override
+        public void onLongPress(MotionEvent e) {
+            int x = (int) e.getRawX();
+            int y = (int) e.getRawY();
+            if(v instanceof  TextView){
+                s=((TextView) v).getText().toString().trim();
+                showPopupMenu(context, s, v, new int[]{x - copyWidth / 2, y - copyHeight - 30});
+            }
+            ViewTreeObserver vto2 = CopyView.getViewTreeObserver();
+            vto2.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    CopyView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                    copyWidth = CopyView.getWidth();
+                    copyHeight = CopyView.getHeight();
+                }
+            });
+        }
+    }
+
+}

@@ -20,7 +20,6 @@ import com.zoneyet.sys.util.Util;
 
 /**
  * 复制模块化
- * Created by MrBoudin on 2016/2/15.
  */
 public class CopyWidget extends RelativeLayout {
     PopupWindow popupWindow;
@@ -93,8 +92,6 @@ public class CopyWidget extends RelativeLayout {
     }
     /***
      * 动态获取rawx,rawy距离屏幕距离
-     * @author sdj
-     * @version $Id: CopyPopWindowUtil.java, v 0.1 2015年4月10日 下午3:18:32 sdj Exp $
      */
     private class MyGesturer extends GestureDetector.SimpleOnGestureListener {
         private Context context;
